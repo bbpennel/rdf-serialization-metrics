@@ -1,0 +1,12 @@
+.project
+.settings
+/*/tmp
+.DS_Store
+*/fcrepo4-data
+.idea
+*.log*
+*.iml
+dump.rdb
+target
+/metrics
+.classpath
