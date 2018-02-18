@@ -1,11 +1,10 @@
 package edu.unc.lib.rdf.metrics;
 
+import static edu.unc.lib.rdf.metrics.ModelUtil.readModel;
+import static edu.unc.lib.rdf.metrics.ModelUtil.streamModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Calendar;
 import java.util.UUID;
@@ -16,7 +15,6 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.vocabulary.RDF;
 import org.junit.BeforeClass;
@@ -24,7 +22,13 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
+/**
+ * Tests to record execution time for Jena to serialize or deserialize models
+ * containing varying numbers of relations or literals.
+ *
+ * @author bbpennel
+ *
+ */
 public class SerializationTypeTest {
     private static final Logger log = LoggerFactory.getLogger(SerializationTypeTest.class);
 
@@ -261,20 +265,6 @@ public class SerializationTypeTest {
 
     protected String resourceUri() {
         return URI_BASE + UUID.randomUUID().toString();
-    }
-
-    protected InputStream streamModel(Model model, RDFFormat format) throws IOException {
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
-            RDFDataMgr.write(bos, model, format);
-            // log.info("{}", new String(bos.toByteArray()));
-            return new ByteArrayInputStream(bos.toByteArray());
-        }
-    }
-
-    public static Model readModel(InputStream inStream, RDFFormat format) {
-        Model model = ModelFactory.createDefaultModel();
-        model.read(inStream, null, format.getLang().getName());
-        return model;
     }
 
     protected Model makeFcrepoContainerModel() {
