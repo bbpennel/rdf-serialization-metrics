@@ -7,6 +7,7 @@ import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 
 import java.net.URI;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -59,7 +60,7 @@ public class FcrepoSerializationTest {
 
     @Test
     public void testRetrieve() throws Exception {
-        String description = "blank";
+        String description = "10,blank";
 
         URI uri = makeObject(null, null, null);
         warmup(uri);
@@ -90,7 +91,7 @@ public class FcrepoSerializationTest {
     }
 
     private void retrieveNLiterals(int numLiterals, int numIterations) throws Exception {
-        String description = numLiterals + "_literals";
+        String description = numLiterals + ",literals";
 
         Model model = ModelFactory.createDefaultModel();
         Resource resc = model.getResource("");
@@ -127,7 +128,7 @@ public class FcrepoSerializationTest {
     }
 
     private void retrieveNPropertiesToSameObject(int numProps, int numIterations) throws Exception {
-        String description = numProps + "_props_same_obj";
+        String description = numProps + ",props_same_obj";
 
         URI objUri = makeObject(null, null, null);
 
@@ -169,7 +170,7 @@ public class FcrepoSerializationTest {
     }
 
     private void retrievePropertyToNObjects(int numProps, int numIterations) throws Exception {
-        String description = numProps + "_props_many_objs";
+        String description = numProps + ",props_many_objs";
 
         Model model = ModelFactory.createDefaultModel();
         Resource resc = model.getResource("");
@@ -204,8 +205,13 @@ public class FcrepoSerializationTest {
         retrieveObjectWithNContained(5000, RET_ITERATIONS);
     }
 
+    @Test
+    public void testRetrieve10000Containment() throws Exception {
+        retrieveObjectWithNContained(10000, RET_ITERATIONS);
+    }
+
     private void retrieveObjectWithNContained(int numChildren, int numIterations) throws Exception {
-        String description = numChildren + "_contains";
+        String description = numChildren + ",contains";
 
         URI uri = makeObject(null, null, null);
         for (int i = 0; i < numChildren; i++) {
@@ -240,7 +246,7 @@ public class FcrepoSerializationTest {
     }
 
     private void retrieveObjectNIndirectContainment(int numChildren, int numIterations) throws Exception {
-        String description = numChildren + "_indirect_contains";
+        String description = numChildren + ",indirect_contains";
 
         URI uri = makeObject(null, null, null);
         URI indirectUri = containerFactory.createIndirectContainer(uri, TEST_PROPERTY, "indirect");
@@ -252,6 +258,9 @@ public class FcrepoSerializationTest {
 
         warmup(uri);
 
+        retrieveObject(uri, RDFFormat.NTRIPLES, ACCEPT_NTRIPLES, numIterations, description);
+        retrieveObject(uri, RDFFormat.JSONLD, ACCEPT_JSON_LD, numIterations, description);
+        retrieveObject(uri, RDFFormat.TURTLE, ACCEPT_TURTLE, numIterations, description);
         retrieveObject(uri, RDFFormat.NTRIPLES, ACCEPT_NTRIPLES, numIterations, description);
         retrieveObject(uri, RDFFormat.JSONLD, ACCEPT_JSON_LD, numIterations, description);
         retrieveObject(uri, RDFFormat.TURTLE, ACCEPT_TURTLE, numIterations, description);
@@ -278,7 +287,7 @@ public class FcrepoSerializationTest {
     }
 
     private void retrieveObjectNDirectContainment(int numChildren, int numIterations) throws Exception {
-        String description = numChildren + "_direct_contains";
+        String description = numChildren + ",direct_contains";
 
         URI uri = makeObject(null, null, null);
         URI directUri = containerFactory.createDirectContainer(uri, TEST_PROPERTY, "direct");
@@ -292,6 +301,9 @@ public class FcrepoSerializationTest {
         retrieveObject(uri, RDFFormat.NTRIPLES, ACCEPT_NTRIPLES, numIterations, description);
         retrieveObject(uri, RDFFormat.JSONLD, ACCEPT_JSON_LD, numIterations, description);
         retrieveObject(uri, RDFFormat.TURTLE, ACCEPT_TURTLE, numIterations, description);
+        retrieveObject(uri, RDFFormat.NTRIPLES, ACCEPT_NTRIPLES, numIterations, description);
+        retrieveObject(uri, RDFFormat.JSONLD, ACCEPT_JSON_LD, numIterations, description);
+        retrieveObject(uri, RDFFormat.TURTLE, ACCEPT_TURTLE, numIterations, description);
     }
 
     private void retrieveObject(URI uri, RDFFormat format, String accept, int iterations, String description)
@@ -300,13 +312,14 @@ public class FcrepoSerializationTest {
 
         for (int i = 0; i < iterations; i++) {
             try (FcrepoResponse resp = fcrepoClient.get(uri).accept(accept).perform()) {
+                IOUtils.toString(resp.getBody(), "UTF-8");
                 //log.info("{}", IOUtils.toString(resp.getBody(), "UTF-8"));
             }
         }
 
         timer.stop();
-        log.info("Retrieve,{},{},{},{},{},{}", iterations, description, format.toString(),
-                timer.getNanoTime() / 1000000, iterations, ((double) timer.getNanoTime() / iterations) / 1000000);
+        log.info("Retrieve,{},{},{},{},{}", iterations, description, format.toString(),
+                timer.getNanoTime() / 1000000, ((double) timer.getNanoTime() / iterations) / 1000000);
     }
 
     private URI makeObject(Model model, RDFFormat format, String contentType) throws Exception {

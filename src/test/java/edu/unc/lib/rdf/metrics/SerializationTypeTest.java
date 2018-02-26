@@ -17,7 +17,6 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.vocabulary.RDF;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,50 +35,8 @@ public class SerializationTypeTest {
     private static final Resource PARENT_RESC = createResource(URI_BASE + "parent");
     private static final Property TEST_PROPERTY = createProperty(URI_BASE + "testProperty");
 
-    private static final int ITERATIONS = 10000;
+    private static final int ITERATIONS = 1000;
     private static final int SHORT_ITERATIONS = 100;
-    private static final int TINY_ITERATIONS = 10;
-
-    public SerializationTypeTest() throws Exception {
-    }
-
-    @BeforeClass
-    public static void initReporters() throws Exception {
-//        registry = new MetricsRegistry(Clock.SYSTEM, metrics);
-//        serialTimer = registry.timer("serialTimer");
-//        deserialTimer = registry.timer("deserialTimer");
-//
-//        File logFile = new File("metrics");//File.createTempFile("metrics", ".csv");
-//        //logFile.createNewFile();
-//        CsvReporter consoleReporter = CsvReporter.forRegistry(metrics)
-//                .convertRatesTo(TimeUnit.NANOSECONDS)
-//                .convertDurationsTo(TimeUnit.NANOSECONDS)
-//                .formatFor(Locale.US)
-//                .build(logFile);
-//        consoleReporter.start(250, TimeUnit.MILLISECONDS);
-//        log.info("{}", logFile.getAbsolutePath());
-//        log.info("{}", logFile.exists());
-//        final Graphite graphite = new Graphite(new InetSocketAddress("localhost", 2003));
-//        final GraphiteReporter reporter = GraphiteReporter.forRegistry(metrics)
-//                                                          .convertRatesTo(TimeUnit.SECONDS)
-//                                                          .convertDurationsTo(TimeUnit.MILLISECONDS)
-//                                                          .filter(MetricFilter.ALL)
-//                                                          .build(graphite);
-        // reporter.start(250, TimeUnit.MILLISECONDS);
-
-//        HttpService.setSslSecurityProtocol(SSLSecurityProtocol.TLSv1_2);
-//        ServiceArgs args = new ServiceArgs();
-//        args.setToken("ea951237-38ad-456e-a3e7-8afa3193d74e");
-//        args.setPort(8088);
-//        args.setScheme("https");
-//        Service splunkService = new Service(args);
-//        SplunkReporter splunkReporter = SplunkReporter.forRegistry(metrics)
-//                .convertRatesTo(TimeUnit.SECONDS)
-//                .convertDurationsTo(TimeUnit.MILLISECONDS)
-//                .withIndex("test")
-//                .build(splunkService);
-//        splunkReporter.start(250, TimeUnit.MILLISECONDS);
-    }
 
     @Test
     public void testSerializationOfBaselineFcrepoRecord() throws Exception {
@@ -87,9 +44,9 @@ public class SerializationTypeTest {
 
         String description = "base_records";
 
-        testSerialization(description, ITERATIONS, RDFFormat.TURTLE, model);
-        testSerialization(description, ITERATIONS, RDFFormat.JSONLD_EXPAND_FLAT, model);
-        testSerialization(description, ITERATIONS, RDFFormat.NTRIPLES, model);
+        testSerialization(description, 10, ITERATIONS, RDFFormat.TURTLE, model);
+        testSerialization(description, 10, ITERATIONS, RDFFormat.JSONLD_EXPAND_FLAT, model);
+        testSerialization(description, 10, ITERATIONS, RDFFormat.NTRIPLES, model);
     }
 
     @Test
@@ -98,132 +55,156 @@ public class SerializationTypeTest {
 
         String description = "base_records";
 
-        testDeserialization(description, ITERATIONS, RDFFormat.TURTLE, model);
-        testDeserialization(description, ITERATIONS, RDFFormat.JSONLD_EXPAND_FLAT, model);
-        testDeserialization(description, ITERATIONS, RDFFormat.NTRIPLES, model);
+        testDeserialization(description, 10, ITERATIONS, RDFFormat.TURTLE, model);
+        testDeserialization(description, 10, ITERATIONS, RDFFormat.JSONLD_EXPAND_FLAT, model);
+        testDeserialization(description, 10, ITERATIONS, RDFFormat.NTRIPLES, model);
     }
 
     @Test
     public void testSerialization100Literals() throws Exception {
-        Model model = makeFcrepoContainerModel();
-        addStringLiterals(model, TEST_PROPERTY, 100);
-
-        String description = "records_100_literals";
-
-        testSerialization(description, ITERATIONS, RDFFormat.TURTLE, model);
-        testSerialization(description, ITERATIONS, RDFFormat.JSONLD_EXPAND_FLAT, model);
-        testSerialization(description, ITERATIONS, RDFFormat.NTRIPLES, model);
-    }
-
-    @Test
-    public void testDeserialization100Literals() throws Exception {
-        Model model = makeFcrepoContainerModel();
-        addStringLiterals(model, TEST_PROPERTY, 100);
-
-        String description = "records_100_literals";
-
-        testDeserialization(description, ITERATIONS, RDFFormat.TURTLE, model);
-        testDeserialization(description, ITERATIONS, RDFFormat.JSONLD_EXPAND_FLAT, model);
-        testDeserialization(description, ITERATIONS, RDFFormat.NTRIPLES, model);
+        serializeNLiterals(100, ITERATIONS);
     }
 
     @Test
     public void testSerialization1000Literals() throws Exception {
+        serializeNLiterals(1000, SHORT_ITERATIONS);
+    }
+
+    @Test
+    public void testSerialization5000Literals() throws Exception {
+        serializeNLiterals(5000, SHORT_ITERATIONS);
+    }
+
+    @Test
+    public void testSerialization10000Literals() throws Exception {
+        serializeNLiterals(10000, SHORT_ITERATIONS);
+    }
+
+    @Test
+    public void testSerialization1000000Literals() throws Exception {
+        serializeNLiterals(1000000, 1);
+    }
+
+    private void serializeNLiterals(int numLits, int numIts) throws Exception {
         Model model = makeFcrepoContainerModel();
-        addStringLiterals(model, TEST_PROPERTY, 1000);
+        addStringLiterals(model, TEST_PROPERTY, numLits);
 
-        String description = "records_1000_literals";
+        String description = "records_literals";
 
-        testSerialization(description, SHORT_ITERATIONS, RDFFormat.TURTLE, model);
-        testSerialization(description, SHORT_ITERATIONS, RDFFormat.JSONLD_EXPAND_FLAT, model);
-        testSerialization(description, SHORT_ITERATIONS, RDFFormat.NTRIPLES, model);
+        testSerialization(description, numLits, numIts, RDFFormat.TURTLE, model);
+        testSerialization(description, numLits, numIts, RDFFormat.JSONLD_EXPAND_FLAT, model);
+        testSerialization(description, numLits, numIts, RDFFormat.NTRIPLES, model);
+    }
+
+    @Test
+    public void testDeserialization100Literals() throws Exception {
+        deserializeNLiterals(100, ITERATIONS);
     }
 
     @Test
     public void testDeserialization1000Literals() throws Exception {
+        deserializeNLiterals(1000, SHORT_ITERATIONS);
+    }
+
+    @Test
+    public void testDeserialization5000Literals() throws Exception {
+        deserializeNLiterals(5000, SHORT_ITERATIONS);
+    }
+
+    @Test
+    public void testDeserialization10000Literals() throws Exception {
+        deserializeNLiterals(10000, SHORT_ITERATIONS);
+    }
+
+    @Test
+    public void testDeserialization1000000Literals() throws Exception {
+        deserializeNLiterals(1000000, 1);
+    }
+
+    private void deserializeNLiterals(int numLits, int numIts) throws Exception {
         Model model = makeFcrepoContainerModel();
-        addStringLiterals(model, TEST_PROPERTY, 1000);
+        addStringLiterals(model, TEST_PROPERTY, numLits);
 
-        String description = "records_1000_literals";
+        String description = "records_literals";
 
-        testDeserialization(description, SHORT_ITERATIONS, RDFFormat.TURTLE, model);
-        testDeserialization(description, SHORT_ITERATIONS, RDFFormat.JSONLD_EXPAND_FLAT, model);
-        testDeserialization(description, SHORT_ITERATIONS, RDFFormat.NTRIPLES, model);
+        testDeserialization(description, numLits, numIts, RDFFormat.TURTLE, model);
+        testDeserialization(description, numLits, numIts, RDFFormat.JSONLD_EXPAND_FLAT, model);
+        testDeserialization(description, numLits, numIts, RDFFormat.NTRIPLES, model);
     }
 
     @Test
     public void testSerialization100Properties() throws Exception {
-        Model model = makeFcrepoContainerModel();
-        addProperties(model, TEST_PROPERTY, 100);
-
-        String description = "records_100_properties";
-
-        testSerialization(description, ITERATIONS, RDFFormat.TURTLE, model);
-        testSerialization(description, ITERATIONS, RDFFormat.JSONLD_EXPAND_FLAT, model);
-        testSerialization(description, ITERATIONS, RDFFormat.NTRIPLES, model);
-    }
-
-    @Test
-    public void testDeserialization100Properties() throws Exception {
-        Model model = makeFcrepoContainerModel();
-        addProperties(model, TEST_PROPERTY, 100);
-
-        String description = "records_100_properties";
-
-        testDeserialization(description, ITERATIONS, RDFFormat.TURTLE, model);
-        testDeserialization(description, ITERATIONS, RDFFormat.JSONLD_EXPAND_FLAT, model);
-        testDeserialization(description, ITERATIONS, RDFFormat.NTRIPLES, model);
+        serializeNProperties(100, ITERATIONS);
     }
 
     @Test
     public void testSerialization1000Properties() throws Exception {
-        Model model = makeFcrepoContainerModel();
-        addProperties(model, TEST_PROPERTY, 1000);
-
-        String description = "records_1000_properties";
-
-        testSerialization(description, SHORT_ITERATIONS, RDFFormat.TURTLE, model);
-        testSerialization(description, SHORT_ITERATIONS, RDFFormat.JSONLD_EXPAND_FLAT, model);
-        testSerialization(description, SHORT_ITERATIONS, RDFFormat.NTRIPLES, model);
-    }
-
-    @Test
-    public void testDeserialization1000Properties() throws Exception {
-        Model model = makeFcrepoContainerModel();
-        addProperties(model, TEST_PROPERTY, 1000);
-
-        String description = "records_1000_properties";
-
-        testDeserialization(description, SHORT_ITERATIONS, RDFFormat.TURTLE, model);
-        testDeserialization(description, SHORT_ITERATIONS, RDFFormat.JSONLD_EXPAND_FLAT, model);
-        testDeserialization(description, SHORT_ITERATIONS, RDFFormat.NTRIPLES, model);
+        serializeNProperties(1000, SHORT_ITERATIONS);
     }
 
     @Test
     public void testSerialization5000Properties() throws Exception {
+        serializeNProperties(5000, SHORT_ITERATIONS);
+    }
+
+    @Test
+    public void testSerialization10000Properties() throws Exception {
+        serializeNProperties(10000, SHORT_ITERATIONS);
+    }
+
+    @Test
+    public void testSerialization1000000Properties() throws Exception {
+        serializeNProperties(1000000, 1);
+    }
+
+    private void serializeNProperties(int numLits, int numIts) throws Exception {
         Model model = makeFcrepoContainerModel();
-        addProperties(model, TEST_PROPERTY, 5000);
+        addProperties(model, TEST_PROPERTY, numLits);
 
-        String description = "records_5000_properties";
+        String description = "records_properties";
 
-        testSerialization(description, TINY_ITERATIONS, RDFFormat.TURTLE, model);
-        testSerialization(description, TINY_ITERATIONS, RDFFormat.JSONLD_EXPAND_FLAT, model);
-        testSerialization(description, TINY_ITERATIONS, RDFFormat.NTRIPLES, model);
+        testSerialization(description, numLits, numIts, RDFFormat.TURTLE, model);
+        testSerialization(description, numLits, numIts, RDFFormat.JSONLD_EXPAND_FLAT, model);
+        testSerialization(description, numLits, numIts, RDFFormat.NTRIPLES, model);
+    }
+
+    @Test
+    public void testDeserialization100Properties() throws Exception {
+        deserializeNProperties(100, ITERATIONS);
+    }
+
+    @Test
+    public void testDeserialization1000Properties() throws Exception {
+        deserializeNProperties(1000, SHORT_ITERATIONS);
     }
 
     @Test
     public void testDeserialization5000Properties() throws Exception {
-        Model model = makeFcrepoContainerModel();
-        addProperties(model, TEST_PROPERTY, 5000);
-
-        String description = "records_5000_properties";
-
-        testDeserialization(description, TINY_ITERATIONS, RDFFormat.TURTLE, model);
-        testDeserialization(description, TINY_ITERATIONS, RDFFormat.JSONLD_EXPAND_FLAT, model);
-        testDeserialization(description, TINY_ITERATIONS, RDFFormat.NTRIPLES, model);
+        deserializeNProperties(5000, SHORT_ITERATIONS);
     }
 
-    private void testSerialization(String description, int iterations, RDFFormat format, Model model)
+    @Test
+    public void testDeserialization10000Properties() throws Exception {
+        deserializeNProperties(10000, SHORT_ITERATIONS);
+    }
+
+    @Test
+    public void testDeserialization1000000Properties() throws Exception {
+        deserializeNProperties(1000000, 1);
+    }
+
+    private void deserializeNProperties(int numLits, int numIts) throws Exception {
+        Model model = makeFcrepoContainerModel();
+        addProperties(model, TEST_PROPERTY, numLits);
+
+        String description = "records_properties";
+
+        testDeserialization(description, numLits, numIts, RDFFormat.TURTLE, model);
+        testDeserialization(description, numLits, numIts, RDFFormat.JSONLD_EXPAND_FLAT, model);
+        testDeserialization(description, numLits, numIts, RDFFormat.NTRIPLES, model);
+    }
+
+    private void testSerialization(String description, int numProperties, int iterations, RDFFormat format, Model model)
             throws Exception {
         streamModel(model, format);
         StopWatch timer = StopWatch.createStarted();
@@ -231,11 +212,13 @@ public class SerializationTypeTest {
             streamModel(model, format);
         }
         timer.stop();
-        log.info("Serialized,{},{},{},{},{}", iterations, description, format.toString(),
-                timer.getNanoTime() / 1000000, ((double) timer.getNanoTime() / iterations) / 1000000);
+        long runTime = timer.getNanoTime();
+        double timePerIteration = ((double) runTime / iterations) / 1000000;
+        log.info("Serialize,{},{},{},{},{},{}", iterations, description, numProperties, format.toString(),
+                runTime / 1000000, timePerIteration);
     }
 
-    private void testDeserialization(String description, int iterations, RDFFormat format, Model model)
+    private void testDeserialization(String description, int numProperties, int iterations, RDFFormat format, Model model)
             throws Exception {
         InputStream stream = streamModel(model, format);
 
@@ -245,8 +228,10 @@ public class SerializationTypeTest {
                 stream.reset();
         }
         timer.stop();
-        log.info("Deserialized,{},{},{},{},{}", iterations, description, format.toString(),
-                timer.getNanoTime() / 1000000, ((double) timer.getNanoTime() / iterations) / 1000000);
+        long runTime = timer.getNanoTime();
+        double timePerIteration = ((double) runTime / iterations) / 1000000;
+        log.info("Deserialize,{},{},{},{},{},{}", iterations, description, numProperties, format.toString(),
+                runTime / 1000000, timePerIteration);
     }
 
     private void addStringLiterals(Model model, Property property, int times) {
